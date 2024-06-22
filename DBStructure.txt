@@ -1,0 +1,27 @@
+
+CREATE DATABASE HOSPITALMANAGEMENTSYSTEM;
+
+
+CREATE TABLE PATIENTS(
+        ID SERIAL PRIMARY KEY , 
+        Name VARCHAR(100) NOT NULL ,
+        AGE INT NOT NULL , 
+        Gender VARCHAR(15) NOT NULL);
+
+
+
+CREATE TABLE DOCTORS(
+        ID SERIAL PRIMARY KEY ,
+        Name VARCHAR(255) NOT NULL ,  
+        Specialization VARCHAR(100) NOT NULL)
+
+
+CREATE TABLE APPOINTMENTS(
+        ID SERIAL PRIMARY KEY , 
+        PatientID INT NOT NULL , 
+        DoctorID INT NOT NULL , 
+        AppointmentDate DATE NOT NULL ,
+        FOREIGN KEY (PatientID) REFERENCES Patient(ID), 
+        FOREIGN KEY (DoctorID) REFERENCES Doctor(ID) );
+
+
