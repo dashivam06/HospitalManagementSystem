@@ -6,6 +6,7 @@ import java.sql.SQLException;
 import java.util.Scanner;
 
 public class Patient {
+    
     private Connection connection;
     private Scanner scanner;
 
@@ -14,19 +15,25 @@ public class Patient {
         this.scanner = scanner;
     }
 
+    /**
+     * Adds a new patient to the database with the provided name, age, and gender.
+     * Prompts the user for input and executes an SQL INSERT command to store the
+     * patient's details.
+     * Prints a success message upon successful insertion or an error message if
+     * insertion fails.
+     */
     public void addPatient() {
-        
+
         System.out.println();
 
-            System.out.print("Enter Patient Name: ");
-            String name = scanner.next(); 
+        System.out.print("Enter Patient Name: ");
+        String name = scanner.next();
 
-            System.out.print("Enter Patient Age: ");
-            int age = scanner.nextInt();       
+        System.out.print("Enter Patient Age: ");
+        int age = scanner.nextInt();
 
-            System.out.print("Enter Patient Gender: ");
-            String gender = scanner.next(); 
-
+        System.out.print("Enter Patient Gender: ");
+        String gender = scanner.next();
 
         try {
             String addPatientCmd = "INSERT INTO PATIENTS(Name, Age , Gender)" +
@@ -53,6 +60,15 @@ public class Patient {
         }
     }
 
+
+
+    /**
+     * Retrieves and displays details of all patients stored in the database.
+     * Executes an SQL SELECT command to fetch patient records and prints them in a
+     * formatted table.
+     * Handles SQLException by printing the stack trace if an error occurs during
+     * database access.
+     */
     public void viewPatients() {
 
         try {
@@ -80,6 +96,19 @@ public class Patient {
             e.printStackTrace();
         }
     }
+
+
+
+
+    /**
+     * Retrieves a patient's details from the database based on the provided ID.
+     *
+     * @param id The ID of the patient to retrieve.
+     * @return true if a patient with the given ID exists in the database, false
+     *         otherwise.
+     *         Prints a stack trace if an SQL exception occurs during database
+     *         access.
+     */
 
     public boolean getPatientByID(int id) {
         String patientEnquiryCMD = "SELECT * FROM PATIENTS WHERE ID =  ? ";
