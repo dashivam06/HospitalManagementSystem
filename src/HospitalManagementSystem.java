@@ -31,8 +31,10 @@ public class HospitalManagementSystem {
 
             Patient patient = new Patient(connection, scanner);
             Doctor doctor = new Doctor(connection);
-
-            while (true) {
+            Invoice invoice = new Invoice(connection, scanner);
+            invoice.extractData();
+            boolean  loop = false;
+            while (loop) {
                 System.out.println("\n+" + "-".repeat(28) + "+");
                 System.out.println("| HOSPITAL MANAGEMENT SYSTEM |");
                 System.out.println("+" + "-".repeat(28) + "+");
