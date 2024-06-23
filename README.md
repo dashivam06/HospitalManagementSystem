@@ -79,12 +79,11 @@ Enter patient details, book appointments, or view doctor details as instructed.
 Need Help?
 If you run into any issues:
 
-Contribution
-Contributions are welcome! If you have any suggestions or improvements, please feel free to create a pull request.
-
 Check Your Input: Make sure you're entering data in the correct format.
 Database Connection: Ensure your PostgreSQL service is running and your credentials are correct.
 
+Contribution
+Contributions are welcome! If you have any suggestions or improvements, please feel free to create a pull request.
 
 Feel free to reach out if you have any questions. Happy managing!
 
