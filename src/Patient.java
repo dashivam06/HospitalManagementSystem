@@ -53,7 +53,9 @@ public class Patient {
                 System.out.println("--".repeat(14));
 
             } else {
-                System.out.println("Failed to add Patient!!");
+                System.out.println("\n" + "--".repeat(14));
+                System.out.println(" Failed to add patient. ");
+                System.out.println("--".repeat(14));
             }
         } catch (SQLException e) {
             e.printStackTrace();

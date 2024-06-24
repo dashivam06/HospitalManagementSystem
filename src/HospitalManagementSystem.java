@@ -32,9 +32,7 @@ public class HospitalManagementSystem {
             Patient patient = new Patient(connection, scanner);
             Doctor doctor = new Doctor(connection);
             Invoice invoice = new Invoice(connection, scanner);
-            invoice.extractData();
-            boolean  loop = false;
-            while (loop) {
+            while (true) {
                 System.out.println("\n+" + "-".repeat(28) + "+");
                 System.out.println("| HOSPITAL MANAGEMENT SYSTEM |");
                 System.out.println("+" + "-".repeat(28) + "+");
@@ -42,7 +40,9 @@ public class HospitalManagementSystem {
                 System.out.println(" 2. View Patient");
                 System.out.println(" 3. View Doctor");
                 System.out.println(" 4. Book Appointment");
-                System.out.println(" 5. Exit");
+                System.out.println(" 5. View Appointment");
+                System.out.println(" 6. Fund Settement");
+                System.out.println(" 7. Exit");
                 System.out.print("\nEnter Your Choice : ");
 
                 int choice = scanner.nextInt();
@@ -66,6 +66,15 @@ public class HospitalManagementSystem {
                         System.out.println();
                         break;
                     case 5:
+                        viewAppointments();
+                        System.out.println();
+                        break;
+                    case 6:
+                        invoice.makePayment();
+                        System.out.println();
+                        break;
+                    case 7:
+                        System.out.println();
                         break;
                     default:
                         System.out.println("Please enter valid option!!");
@@ -161,6 +170,47 @@ public class HospitalManagementSystem {
 
         return true;
 
+    }
+
+    private static void viewAppointments()
+    {
+        String checkAppointmentCmd = "SELECT "+
+                                        "APPOINTMENTS.ID AS AppointmentID, "+
+                                        "PATIENTS.Name AS PatientName, "+
+                                        "DOCTORS.Name AS DoctorName, "+
+                                        "APPOINTMENTS.AppointmentDate "+
+
+                                    "FROM "+
+                                    "    APPOINTMENTS "+
+                                    "JOIN "+
+                                    "    PATIENTS ON APPOINTMENTS.PatientID = PATIENTS.ID "+
+                                    "JOIN "+
+                                    "    DOCTORS ON APPOINTMENTS.DoctorID = DOCTORS.ID ";
+
+        try {
+            PreparedStatement statement = connection.prepareStatement(checkAppointmentCmd);
+            ResultSet result = statement.executeQuery();
+            System.out.println("Appointments :");
+            System.out.println("+----------+-------------------------+-------------------------+--------------------+");
+            System.out.println("|  ID      | Patient Name            | Doctor Name             | Appointment Date   |");
+            System.out.println("+----------+-------------------------+-------------------------+--------------------+");
+
+            while(result.next())
+            {
+                String appointmentID = result.getString("AppointmentID");
+                String patientName = result.getString("PatientName");
+                String doctorName = result.getString("DoctorName");
+                String appointmentDate = result.getString("AppointmentDate");
+
+                System.out.printf("| %-9s| %-24s| %-24s| %-19s|\n",appointmentID,patientName,doctorName,appointmentDate);
+                System.out.println("+----------+-------------------------+-------------------------+--------------------+");
+
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        
     }
 
     /**
