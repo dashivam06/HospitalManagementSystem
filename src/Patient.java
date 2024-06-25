@@ -3,10 +3,12 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.InputMismatchException;
 import java.util.Scanner;
 
+
 public class Patient {
-    
+
     private Connection connection;
     private Scanner scanner;
 
@@ -25,15 +27,64 @@ public class Patient {
     public void addPatient() {
 
         System.out.println();
+        
+        String name = "";
+        int age = -1;
+        String gender = "";
 
-        System.out.print("Enter Patient Name: ");
-        String name = scanner.next();
+        // Input Patient Name
+        while (name.isEmpty()) {
+            try {
+                System.out.print("Enter Patient Name: ");
+                name = scanner.next();
+                
+                
+                if (name.trim().isEmpty() || (containsNumber(name))) {
+                    System.out.println("\nInvalid input. Please enter a valid name.\n");
+                    name = "";
+                }
+            } catch (InputMismatchException e) {
+                System.out.println("\nInvalid input. Please enter a valid name.\n");
+                scanner.nextLine(); // Clear the invalid input
+            }
+        }
 
-        System.out.print("Enter Patient Age: ");
-        int age = scanner.nextInt();
+        // Input Patient Age
+        while (age == -1) {
+            try {
+                System.out.print("Enter Patient Age: ");
+                age = scanner.nextInt();
+                if (age <= 0) {
+                    System.out.println("\nInvalid age. Please enter a positive integer.\n");
+                    age = -1; // Reset age to continue the loop
+                }
+            } catch (InputMismatchException e) {
+                System.out.println("\nInvalid input. Please enter a valid age.\n");
+                scanner.nextLine(); // Clear the invalid input
+            }
+        }
 
-        System.out.print("Enter Patient Gender: ");
-        String gender = scanner.next();
+        // Input Patient Gender
+        while (gender.isEmpty()) {
+            try {
+                System.out.print("Enter Patient Gender: ");
+                gender = scanner.next();
+
+                if (!gender.equalsIgnoreCase("Male") && !gender.equalsIgnoreCase("Female") && !gender.equalsIgnoreCase("Other")) {
+                    System.out.println("\nInvalid input. Please enter 'Male', 'Female', or 'Other'.\n");
+                    gender = "";
+                }
+            } catch (InputMismatchException e) {
+                System.out.println("\nInvalid input. Please enter a valid gender.\n");
+                scanner.nextLine(); // Clear the invalid input
+            }
+        }
+
+
+
+
+
+
 
         try {
             String addPatientCmd = "INSERT INTO PATIENTS(Name, Age , Gender)" +
@@ -61,8 +112,6 @@ public class Patient {
             e.printStackTrace();
         }
     }
-
-
 
     /**
      * Retrieves and displays details of all patients stored in the database.
@@ -99,9 +148,6 @@ public class Patient {
         }
     }
 
-
-
-
     /**
      * Retrieves a patient's details from the database based on the provided ID.
      *
@@ -130,5 +176,109 @@ public class Patient {
         }
         return false;
     }
+
+    public void dischargePatient() {
+
+        int patientID = -1;
+
+        // Input Patient ID
+        while (patientID == -1) {
+            try {
+                System.out.print("Enter Patient's ID :  ");
+                patientID = scanner.nextInt();
+
+                if (patientID <= 0 || (!getPatientByID(patientID))) {
+                    System.out.println("\n-----------------------------");
+                    System.out.println("Patient ID " + patientID + " does not exist.");
+                    System.out.println("-----------------------------\n");
+                    patientID = -1;
+                }
+            } catch (InputMismatchException e) {
+                System.out.println("\nInvalid input. Please enter a valid Patient ID.\n");
+                scanner.nextLine(); // Clear the invalid input
+            }
+        }
+
+        String deleteAppointmentCmd = "DELETE FROM APPOINTMENTS WHERE PatientID = ?";
+        String deletePatientCmd = "DELETE FROM PATIENTS WHERE ID = ?";
+        String patientCheck = "SELECT * FROM PATIENTS WHERE ID = ? ";
+
+        System.out.println();
+        System.out.print("Are you sure to proceed ? (y/n) : ");
+        String input = scanner.next();
+
+        if (input.toUpperCase().equals("Y")) {
+
+            try {
+                PreparedStatement deleteAppointmentStmt = connection.prepareStatement(deleteAppointmentCmd);
+                PreparedStatement deletePatientStmt = connection.prepareStatement(deletePatientCmd);
+                PreparedStatement patientCheckStmt = connection.prepareStatement(patientCheck);
+
+                connection.setAutoCommit(false); // Start transaction
+
+
+                patientCheckStmt.setInt(1, patientID);
+                ResultSet rs = patientCheckStmt.executeQuery();
+
+                if (rs.next()) {
+                    // if Patient exists, proceed with deletions
+                    deleteAppointmentStmt.setInt(1, patientID);
+                    deleteAppointmentStmt.addBatch();
+
+                    deletePatientStmt.setInt(1, patientID);
+                    deletePatientStmt.addBatch();
+
+                    // Execute batch
+                    deleteAppointmentStmt.executeBatch();
+                    deletePatientStmt.executeBatch();
+
+                    connection.commit();
+
+                    System.out.println("\n-------------------------------");
+                    System.out.println(" Patient Discharge Successful.");
+                    System.out.println("-------------------------------\n");
+
+                } 
+
+            } catch (SQLException e) {
+                try {
+                    connection.rollback();
+                    // Rollback transaction on error
+                    System.out.println("\n---------------------------");
+                    System.out.println(" Patient Discharge Failed.");
+                    System.out.println("---------------------------\n");
+                } catch (SQLException e1) {
+                    e1.printStackTrace();
+                }
+
+            } finally {
+                try {
+                    connection.setAutoCommit(true);
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+
+        }
+    }
+
+
+    public static boolean containsNumber(String input)
+    {
+
+        int len = input.length();
+
+        for(int i = 0 ; i < len; i ++)
+        {
+            char character = input.charAt(i);
+            if(Character.isDigit(character))
+            {
+                
+                return true;
+            }
+        }
+        return false;
+    }    
+
 
 }

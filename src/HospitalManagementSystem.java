@@ -6,6 +6,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.util.InputMismatchException;
 import java.util.Scanner;
 
 public class HospitalManagementSystem {
@@ -17,6 +20,10 @@ public class HospitalManagementSystem {
     private static final String password = "root";
 
     public static void main(String[] args) {
+        mainMenu();
+    }
+
+    public static void mainMenu() {
 
         try {
             Class.forName("org.postgresql.Driver");
@@ -31,59 +38,79 @@ public class HospitalManagementSystem {
 
             Patient patient = new Patient(connection, scanner);
             Doctor doctor = new Doctor(connection);
+
             Invoice invoice = new Invoice(connection, scanner);
-            while (true) {
-                System.out.println("\n+" + "-".repeat(28) + "+");
-                System.out.println("| HOSPITAL MANAGEMENT SYSTEM |");
-                System.out.println("+" + "-".repeat(28) + "+");
-                System.out.println(" 1. Add Patient");
-                System.out.println(" 2. View Patient");
-                System.out.println(" 3. View Doctor");
-                System.out.println(" 4. Book Appointment");
-                System.out.println(" 5. View Appointment");
-                System.out.println(" 6. Fund Settement");
-                System.out.println(" 7. Exit");
-                System.out.print("\nEnter Your Choice : ");
+            boolean loop = true;
 
-                int choice = scanner.nextInt();
-                System.out.println();
+            try {
 
-                switch (choice) {
-                    case 1:
-                        patient.addPatient();
-                        System.out.println();
-                        break;
-                    case 2:
-                        patient.viewPatients();
-                        System.out.println();
-                        break;
-                    case 3:
-                        doctor.viewDoctorDetails();
-                        System.out.println();
-                        break;
-                    case 4:
-                        bookAppointments(patient, doctor);
-                        System.out.println();
-                        break;
-                    case 5:
-                        viewAppointments();
-                        System.out.println();
-                        break;
-                    case 6:
-                        invoice.makePayment();
-                        System.out.println();
-                        break;
-                    case 7:
-                        System.out.println();
-                        break;
-                    default:
-                        System.out.println("Please enter valid option!!");
-                        System.out.println();
-                        break;
+                while (loop) {
+                    System.out.println("\n+" + "-".repeat(28) + "+");
+                    System.out.println("| HOSPITAL MANAGEMENT SYSTEM |");
+                    System.out.println("+" + "-".repeat(28) + "+");
+                    System.out.println(" 1. Add Patient");
+                    System.out.println(" 2. View Patient");
+                    System.out.println(" 3. Discharge Patient");
+                    System.out.println(" 4. View Doctor");
+                    System.out.println(" 5. Book Appointment");
+                    System.out.println(" 6. View Appointment");
+                    System.out.println(" 7. Cancel Appointment");
+                    System.out.println(" 8. Fund Settement");
+                    System.out.println(" 9. Exit");
+                    System.out.print("\nEnter Your Choice : ");
+
+                    int choice = scanner.nextInt();
+                    System.out.println("\n");
+
+                    switch (choice) {
+                        case 1:
+                            patient.addPatient();
+                            System.out.println();
+                            break;
+                        case 2:
+                            patient.viewPatients();
+                            System.out.println();
+                            break;
+                        case 3:
+                            patient.dischargePatient();
+                            System.out.println();
+                            break;
+                        case 4:
+                            doctor.viewDoctorDetails();
+                            System.out.println();
+                            break;
+                        case 5:
+                            bookAppointments(patient, doctor);
+                            System.out.println();
+                            break;
+                        case 6:
+                            viewAppointments();
+                            System.out.println();
+                            break;
+                        case 7:
+                            cancelAppointment();
+                            System.out.println();
+                            break;
+                        case 8:
+                            invoice.makePayment();
+                            System.out.println();
+                            break;
+                        case 9:
+                            System.out.println("---------------------------------");
+                            System.out.println(" Thankyou for using our service. ");
+                            System.out.println("---------------------------------\n");
+                            loop = false;
+                            break;
+                        default:
+                            System.out.println("Please enter valid option!!\n");
+                            break;
+                    }
+
                 }
-
+            } catch (InputMismatchException f) {
+                System.out.println("\nInvalid input. Please choose a valid option.\n");
+                mainMenu();
             }
-
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -97,39 +124,85 @@ public class HospitalManagementSystem {
      */
 
     public static void bookAppointments(Patient patient, Doctor doctor) {
-        System.out.print("Enter Patient's ID :  ");
-        int patientID = scanner.nextInt();
-        System.out.print("Enter Doctors's ID :  ");
-        int doctorID = scanner.nextInt();
-        System.out.print("Enter appointment date (YYYY-MM-DD) :  ");
-        String date = scanner.next();
+
+        int patientID = -1;
+        int doctorID = -1;
+        String date = null;
+
+        // Input Patient ID
+        while (patientID == -1) {
+            try {
+                System.out.print("Enter Patient's ID :  ");
+                patientID = scanner.nextInt();
+
+                if (patientID <= 0 || (!patient.getPatientByID(patientID))) {
+                    System.out.println("\n------------------------------------");
+                    System.out.println("Patient id cannot be verified.");
+                    System.out.println("No entries found for patient id " + patientID);
+                    System.out.println("------------------------------------\n");
+                    patientID = -1;
+                }
+            } catch (InputMismatchException e) {
+                System.out.println("\nInvalid input. Please enter a valid Patient ID.\n");
+                scanner.nextLine(); // Clear the invalid input
+            }
+        }
+
+        // Input Doctor ID
+        while (doctorID == -1) {
+            try {
+                System.out.print("Enter Doctor's ID :  ");
+                doctorID = scanner.nextInt();
+                if (doctorID <= 0 || (!doctor.getDoctorById(doctorID))) {
+                    System.out.println("\n------------------------------------");
+                    System.out.println("Doctor id cannot be verified.");
+                    System.out.println("No entries found for doctor id " + patientID);
+                    System.out.println("------------------------------------\n");
+                    doctorID = -1; // Reset doctorID to continue the loop
+                }
+            } catch (InputMismatchException e) {
+                System.out.println("\nInvalid input. Please enter a valid Doctor ID.\n");
+                scanner.nextLine(); // Clear the invalid input
+            }
+        }
+
+        // Input Appointment Date
+        while (date == null) {
+            try {
+                System.out.print("Enter appointment date (YYYY-MM-DD) :  ");
+                date = scanner.next();
+                DateTimeFormatter ex = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+                ex.parse(date);
+
+            } catch (DateTimeParseException e) {
+                System.out.println("\n-----------------------------------------");
+                System.out.println("Invalid input. \nPlease enter the date in YYYY-MM-DD format.");
+                System.out.println("-------------------------------------------\n");
+                scanner.nextLine();
+                date = null;
+            }
+        }
 
         String cmd = "INSERT INTO APPOINTMENTS(PatientID, DoctorID,AppointmentDate)" +
                 "VALUES ( ?, ?, ?)";
         try {
             PreparedStatement makeAppointmentStatement = connection.prepareStatement(cmd);
 
-            if ((doctor.getDoctorById(doctorID)) && (patient.getPatientByID(patientID))) {
-                if (checkDoctorAvailablity(doctorID, date)) {
-                    makeAppointmentStatement.setInt(1, patientID);
-                    makeAppointmentStatement.setInt(2, doctorID);
-                    makeAppointmentStatement.setDate(3, parseDate(date));
-                    makeAppointmentStatement.executeUpdate();
-                    System.out.println("\n" + "----------------------");
-                    System.out.println(" Appointment Booked!!");
-                    System.out.println("----------------------");
-                } else {
-                    System.out.println("\n" + "-------------------------------------");
-                    System.out.println(" Failed to make appointment.");
-                    System.out.println(" Doctor not available on this date.");
-                    System.out.println("-------------------------------------");
-                }
-
+            if (checkDoctorAvailablity(doctorID, date)) {
+                makeAppointmentStatement.setInt(1, patientID);
+                makeAppointmentStatement.setInt(2, doctorID);
+                makeAppointmentStatement.setDate(3, parseDate(date));
+                makeAppointmentStatement.executeUpdate();
+                System.out.println("\n" + "----------------------");
+                System.out.println(" Appointment Booked!!");
+                System.out.println("----------------------");
             } else {
-                System.out.println("\n" + "--------------------------------------------------");
-                System.out.println(" Provided patient id or doctor id might be wrong.");
-                System.out.println("--------------------------------------------------");
+                System.out.println("\n" + "-------------------------------------");
+                System.out.println(" Failed to make appointment.");
+                System.out.println(" Doctor not available on this date.");
+                System.out.println("-------------------------------------");
             }
+
         } catch (SQLException e) {
             e.printStackTrace();
         } catch (ParseException f) {
@@ -149,6 +222,7 @@ public class HospitalManagementSystem {
      */
 
     public static boolean checkDoctorAvailablity(int doctorID, String appointmentDate) {
+
         String checkAvailabilityCmd = "SELECT * FROM APPOINTMENTS WHERE DoctorID = ? AND AppointmentDate = ? ";
 
         try {
@@ -172,20 +246,19 @@ public class HospitalManagementSystem {
 
     }
 
-    private static void viewAppointments()
-    {
-        String checkAppointmentCmd = "SELECT "+
-                                        "APPOINTMENTS.ID AS AppointmentID, "+
-                                        "PATIENTS.Name AS PatientName, "+
-                                        "DOCTORS.Name AS DoctorName, "+
-                                        "APPOINTMENTS.AppointmentDate "+
+    private static void viewAppointments() {
+        String checkAppointmentCmd = "SELECT " +
+                "APPOINTMENTS.ID AS AppointmentID, " +
+                "PATIENTS.Name AS PatientName, " +
+                "DOCTORS.Name AS DoctorName, " +
+                "APPOINTMENTS.AppointmentDate " +
 
-                                    "FROM "+
-                                    "    APPOINTMENTS "+
-                                    "JOIN "+
-                                    "    PATIENTS ON APPOINTMENTS.PatientID = PATIENTS.ID "+
-                                    "JOIN "+
-                                    "    DOCTORS ON APPOINTMENTS.DoctorID = DOCTORS.ID ";
+                "FROM " +
+                "    APPOINTMENTS " +
+                "JOIN " +
+                "    PATIENTS ON APPOINTMENTS.PatientID = PATIENTS.ID " +
+                "JOIN " +
+                "    DOCTORS ON APPOINTMENTS.DoctorID = DOCTORS.ID ";
 
         try {
             PreparedStatement statement = connection.prepareStatement(checkAppointmentCmd);
@@ -195,22 +268,95 @@ public class HospitalManagementSystem {
             System.out.println("|  ID      | Patient Name            | Doctor Name             | Appointment Date   |");
             System.out.println("+----------+-------------------------+-------------------------+--------------------+");
 
-            while(result.next())
-            {
+            while (result.next()) {
                 String appointmentID = result.getString("AppointmentID");
                 String patientName = result.getString("PatientName");
                 String doctorName = result.getString("DoctorName");
                 String appointmentDate = result.getString("AppointmentDate");
 
-                System.out.printf("| %-9s| %-24s| %-24s| %-19s|\n",appointmentID,patientName,doctorName,appointmentDate);
-                System.out.println("+----------+-------------------------+-------------------------+--------------------+");
+                System.out.printf("| %-9s| %-24s| %-24s| %-19s|\n", appointmentID, patientName, doctorName,
+                        appointmentDate);
+                System.out.println(
+                        "+----------+-------------------------+-------------------------+--------------------+");
 
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
 
+    }
+
+    public static void cancelAppointment() {
+
+        int appointmentId = -1;
         
+
+        while (appointmentId == -1) {
+
+            try {
+
+                System.out.print("Enter Appointment ID : ");
+                appointmentId = scanner.nextInt();
+
+            } catch (InputMismatchException e) {
+                System.out.println("\nInvalid input. Please enter a valid appointment id.\n");
+                scanner.nextLine(); 
+                appointmentId = -1;
+            }
+        }
+            if(Invoice.checkForAppointments(appointmentId) == 0)
+{
+                System.out.println("\n---------------------------------------");
+                System.out.println("Appointment id cannot be verified.");
+                System.out.println("No entries found for appointment id " + appointmentId);
+                System.out.println("-----------------------------------------\n");
+                cancelAppointment();
+            }
+        
+
+        int count = Invoice.checkForAppointments(appointmentId);
+        String delFromAppointmentStr = "DELETE FROM APPOINTMENTS WHERE ID = ? ";
+        String delFromInvoiceStr = "DELETE FROM INVOICE WHERE APPOINTMENTID = ? ";
+
+        
+
+        System.out.print("Are you sure to proceed ? (y/n) : ");
+        String input = scanner.next();
+
+        if (input.trim().toUpperCase().equals("Y")) {
+
+            if (count == 2) {
+                try {
+                    PreparedStatement delFromInvoiceStatement = connection.prepareStatement(delFromInvoiceStr);
+                    delFromInvoiceStatement.setInt(1, appointmentId);
+                    delFromInvoiceStatement.executeUpdate();
+
+                    System.out.println("\n---------------------------------------------");
+                    System.out.println(" Appointment cancelled and payment refunded.");
+                    System.out.println("---------------------------------------------");
+                    return;
+
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+            if (count == 1) {
+                try {
+                    PreparedStatement delFromAppointmentStatement = connection.prepareStatement(delFromAppointmentStr);
+                    delFromAppointmentStatement.setInt(1, appointmentId);
+                    delFromAppointmentStatement.executeUpdate();
+
+                    System.out.println("\n------------------------");
+                    System.out.println(" Appointment cancelled .");
+                    System.out.println("------------------------");
+                    return;
+
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            } 
+        }
+        System.out.println();
     }
 
     /**

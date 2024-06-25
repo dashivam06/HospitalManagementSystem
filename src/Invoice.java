@@ -2,25 +2,42 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.InputMismatchException;
+import java.util.List;
 import java.util.Scanner;
 
 public class Invoice {
-    private Connection connection;
-    private Scanner scanner;
+    private static Connection connection;
+    private static Scanner scanner;
+    static int qty = 1;
+    static double discountPercentage = 5;
 
-    public Invoice(Connection connection, Scanner scanner) {
-        this.connection = connection;
-        this.scanner = scanner;
+    public Invoice(Connection con, Scanner scan) {
+        connection = con;
+        scanner = scan;
     }
 
-    public void makePayment() {
-        String cmd = "INSERT INTO INVOICE (AppointmentID, PaymentMethod, Amount)" +
-                "VALUES( ?, ? , ? )";
+    public  void makePayment() {
+        String cmd = "INSERT INTO INVOICE (AppointmentID, PaymentMethod, Amount, Discount)" +
+                "VALUES( ?, ? , ? , ? )";
 
         System.out.println();
 
         System.out.print("Enter Appointment ID : ");
-        int appointmentID = scanner.nextInt();
+
+        int appointmentID =  -1;
+
+        while(appointmentID ==  -1){
+        try{
+            appointmentID = scanner.nextInt();
+        }
+        catch(InputMismatchException f )
+        {
+            System.out.println("\nInvalid input. Please enter a valid Doctor ID.\n");
+            appointmentID = -1;
+        }
+    }
 
         if (checkForAppointments(appointmentID) == 2) {
             System.out.println("\n---------------------------------------------");
@@ -34,9 +51,23 @@ public class Invoice {
             System.out.println("---------------------------------------------");
             return;
         } else if (checkForAppointments(appointmentID) == 1) {
+
+            String paymentMode = null ;
+            while(paymentMode == null)
+            {
+                try{
             System.out.print("Enter PaymentMethod : ");
-            String paymentMode = scanner.next();
-            int amount = getTotalPaymentAmt(appointmentID);
+            paymentMode = scanner.next();
+                }catch(InputMismatchException f)
+                {
+                    System.out.println("\nInvalid input. Please enter a valid payment mode.\n");
+                    paymentMode = null;
+                }
+            }
+            List<Double> paymentDetail = getTotalPaymentAmt(appointmentID, discountPercentage, qty);
+            System.out.println(paymentDetail);
+            double amount = paymentDetail.get(3);
+            double discount = paymentDetail.get(2);
 
             try {
                 PreparedStatement makePaymentStatement = connection.prepareStatement(cmd);
@@ -44,6 +75,7 @@ public class Invoice {
                 makePaymentStatement.setInt(1, appointmentID);
                 makePaymentStatement.setString(2, paymentMode);
                 makePaymentStatement.setDouble(3, amount);
+                makePaymentStatement.setDouble(4, discount);
 
                 makePaymentStatement.executeUpdate();
 
@@ -58,15 +90,17 @@ public class Invoice {
 
     }
 
-    public int getTotalPaymentAmt(int appointmentid) {
-        Integer PHYSICIAN_FEES = 2000;
-        Integer SURGEON_FEES = 5000;
-        Integer ORTHODONTISTS_FEES = 2000;
+    public static List<Double> getTotalPaymentAmt(int appointmentid, double discountPercentage, int qty) {
+        Integer PHYSICIAN_FEES = 3000;
+        Integer SURGEON_FEES = 8000;
+        Integer ORTHODONTISTS_FEES = 5000;
         String cmd = "SELECT DOCTORS.Specialization " +
                 "FROM APPOINTMENTS " +
                 "JOIN DOCTORS ON APPOINTMENTS.DoctorID = DOCTORS.ID " +
                 "WHERE APPOINTMENTS.ID = ? ";
-        int totalPayment = 0;
+        double totalPayment = 0;
+        double rate = 0;
+        double discount = 0;
 
         PreparedStatement preparedStatement;
         try {
@@ -79,11 +113,11 @@ public class Invoice {
                 String specialization = result.getString("Specialization");
 
                 if (specialization.equals("Physician")) {
-                    totalPayment = PHYSICIAN_FEES;
+                    rate = PHYSICIAN_FEES;
                 } else if (specialization.equals("Surgeon")) {
-                    totalPayment = SURGEON_FEES;
+                    rate = SURGEON_FEES;
                 } else if (specialization.equals("Orthodontists")) {
-                    totalPayment = ORTHODONTISTS_FEES;
+                    rate = ORTHODONTISTS_FEES;
                 } else {
                     System.out.println("Specialization not registered.");
                 }
@@ -91,14 +125,27 @@ public class Invoice {
                 System.out.println("No column retrived");
             }
 
+            totalPayment = rate * qty;
+
         } catch (SQLException e) {
             e.printStackTrace();
         }
 
-        return totalPayment;
+        discount = discountPercentage * totalPayment / 100;
+
+        totalPayment = totalPayment - discount;
+
+        ArrayList<Double> output = new ArrayList<>();
+        output.add(rate);
+        output.add((double) qty);
+        output.add(discount);
+        output.add(totalPayment);
+
+
+        return output;
     }
 
-    public ResultSet getDetails(int appointmentID) {
+    public static ResultSet getDetails(int appointmentID) {
         String detailsCmd = """
                 SELECT
                     PATIENTS.ID AS PatientID,
@@ -112,7 +159,8 @@ public class Invoice {
                     DOCTORS.Specialization,
                     APPOINTMENTS.ID AS AppointmentID,
                     APPOINTMENTS.AppointmentDate,
-                    INVOICE.Amount
+                    INVOICE.Amount,
+                    Invoice.Discount
                 FROM
                     PATIENTS PATIENTS
                 JOIN
@@ -139,18 +187,22 @@ public class Invoice {
 
     }
 
-    public static void printInvoice(String invoiceID, String paymentMode, double totalAmount, String patientID,
+    public static void printInvoice(String invoiceID, String paymentMode, String patientID,
             String patientName, String patientAge, String patientGender, String doctorName, String specialization,
-            String appointmentDate, String transactionDate, int qty, int discountPercentage) {
-        String amtInString = String.valueOf(totalAmount);
-        String sumTotalinString = String.valueOf(qty * totalAmount);
+            String appointmentDate, String transactionDate, List<Double> paymentDetail) {
+
+
+        Double totalAmount = paymentDetail.get(3);
+        Double rate = paymentDetail.get(0);
+        String amtInString = String.valueOf(rate);
+        String sumTotalinString = String.valueOf(qty * rate);
         String qtyString = String.valueOf(qty);
-        String discountInString = String.valueOf(discountPercentage * totalAmount / 100);
-        NumberToWords toWords = new NumberToWords();
-        String numInWords = NumberToWords.convert((int) totalAmount);
-        double totalAmtAfterDis = totalAmount - Double.parseDouble(discountInString);
+        String discountInString = String.valueOf(discountPercentage * (rate / 100));       
+        String numInWords = NumberToWords.convert(totalAmount.intValue());
+        double totalAmtAfterDis = Double.parseDouble(sumTotalinString) - Double.parseDouble(discountInString);
         String totalAmtAfterDisinStr = String.valueOf(totalAmtAfterDis);
         String testName = " 1 : 1  Session";
+
 
         System.out.println(
                 "+----------------------------------------------------------------------------------------------------+");
@@ -185,10 +237,10 @@ public class Invoice {
         System.out.println(
                 "|----------------------------------------------------------------------------------------------------|");
         System.out.println(
-                "|  SN Test                                           Rate            Qty            Amount           | ");
+                "|  SN    Test                                        Rate            Qty            Amount           | ");
         System.out.println(
                 "|----------------------------------------------------------------------------------------------------|");
-        System.out.println("|  1  " + formatData(testName, 22) + "                       " + formatData(amtInString, 9)
+        System.out.println("|  1     " + formatData(testName, 22) + "                    " + formatData(amtInString, 9)
                 + "          " + formatData(qtyString, 3) + "           " + formatData(sumTotalinString, 9)
                 + "        |");
         System.out.println(
@@ -212,7 +264,7 @@ public class Invoice {
 
     }
 
-    public int checkForAppointments(int appointmentId) {
+    public static int checkForAppointments(int appointmentId) {
         String checkAppointmentCmd = "SELECT * FROM INVOICE WHERE APPOINTMENTID = ? ";
         String checkInvoiceCmd = "SELECT * FROM APPOINTMENTS WHERE ID = ? ";
         int count = 0;
@@ -252,7 +304,7 @@ public class Invoice {
         return count;
     }
 
-    public void extractData(int appointmentid) {
+    public static void extractData(int appointmentid) {
         try {
             ResultSet result = getDetails(appointmentid);
 
@@ -270,13 +322,12 @@ public class Invoice {
 
                 String invoiceID = result.getString("InvoiceID");
                 String paymentMethod = result.getString("PaymentMethod");
+                List<Double> paymentDetail = getTotalPaymentAmt(appointmentid, discountPercentage, qty);
 
                 String transactionDate = result.getString("TransactionDate");
 
-                double amt = result.getDouble("Amount");
-
-                printInvoice(invoiceID, paymentMethod, amt, patientID, patientName, patientAge, patientGender,
-                        doctorName, doctorSpecialization, appointmentDate, transactionDate, 1, 5);
+                printInvoice(invoiceID, paymentMethod, patientID, patientName, patientAge, patientGender,
+                        doctorName, doctorSpecialization, appointmentDate, transactionDate, paymentDetail);
             } else {
                 System.out.println("No entries found for appointment id : " + appointmentid);
             }

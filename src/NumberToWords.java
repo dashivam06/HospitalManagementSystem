@@ -9,7 +9,7 @@ public class NumberToWords {
         "", "", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"
     };
 
-    private static String convertBelowThousand(int number) {
+    private static String convertBelowThousand(Integer number) {
         if (number < 20) {
             return units[number];
         } else if (number < 100) {
@@ -19,7 +19,7 @@ public class NumberToWords {
         }
     }
 
-    private static String convertBelowHundred(int number) {
+    private static String convertBelowHundred(Integer number) {
         if (number < 20) {
             return units[number];
         } else {
@@ -27,7 +27,7 @@ public class NumberToWords {
         }
     }
 
-    public static String convert(int number) {
+    public static String convert(Integer number) {
         if (number == 0) {
             return "Zero";
         }
