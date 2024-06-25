@@ -1,12 +1,12 @@
-public class NumberToWords {
+public class Num2Word {
 
     private static final String[] units = {
-        "", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten",
-        "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen", "Seventeen", "Eighteen", "Nineteen"
+            "", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten",
+            "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen", "Seventeen", "Eighteen", "Nineteen"
     };
 
     private static final String[] tens = {
-        "", "", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"
+            "", "", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"
     };
 
     private static String convertBelowThousand(Integer number) {
@@ -15,7 +15,8 @@ public class NumberToWords {
         } else if (number < 100) {
             return tens[number / 10] + (number % 10 != 0 ? " " + units[number % 10] : "");
         } else {
-            return units[number / 100] + " Hundred" + (number % 100 != 0 ? " and " + convertBelowHundred(number % 100) : "");
+            return units[number / 100] + " Hundred"
+                    + (number % 100 != 0 ? " and " + convertBelowHundred(number % 100) : "");
         }
     }
 
@@ -51,5 +52,4 @@ public class NumberToWords {
         return words.trim();
     }
 
-    
 }

@@ -6,7 +6,6 @@ import java.sql.SQLException;
 import java.util.InputMismatchException;
 import java.util.Scanner;
 
-
 public class Patient {
 
     private Connection connection;
@@ -23,11 +22,13 @@ public class Patient {
      * patient's details.
      * Prints a success message upon successful insertion or an error message if
      * insertion fails.
+     *
+     * @throws SQLException If an SQL exception occurs while accessing the database.
      */
     public void addPatient() {
 
         System.out.println();
-        
+
         String name = "";
         int age = -1;
         String gender = "";
@@ -37,8 +38,7 @@ public class Patient {
             try {
                 System.out.print("Enter Patient Name: ");
                 name = scanner.next();
-                
-                
+
                 if (name.trim().isEmpty() || (containsNumber(name))) {
                     System.out.println("\nInvalid input. Please enter a valid name.\n");
                     name = "";
@@ -70,7 +70,8 @@ public class Patient {
                 System.out.print("Enter Patient Gender: ");
                 gender = scanner.next();
 
-                if (!gender.equalsIgnoreCase("Male") && !gender.equalsIgnoreCase("Female") && !gender.equalsIgnoreCase("Other")) {
+                if (!gender.equalsIgnoreCase("Male") && !gender.equalsIgnoreCase("Female")
+                        && !gender.equalsIgnoreCase("Other")) {
                     System.out.println("\nInvalid input. Please enter 'Male', 'Female', or 'Other'.\n");
                     gender = "";
                 }
@@ -79,12 +80,6 @@ public class Patient {
                 scanner.nextLine(); // Clear the invalid input
             }
         }
-
-
-
-
-
-
 
         try {
             String addPatientCmd = "INSERT INTO PATIENTS(Name, Age , Gender)" +
@@ -216,7 +211,6 @@ public class Patient {
 
                 connection.setAutoCommit(false); // Start transaction
 
-
                 patientCheckStmt.setInt(1, patientID);
                 ResultSet rs = patientCheckStmt.executeQuery();
 
@@ -238,7 +232,7 @@ public class Patient {
                     System.out.println(" Patient Discharge Successful.");
                     System.out.println("-------------------------------\n");
 
-                } 
+                }
 
             } catch (SQLException e) {
                 try {
@@ -262,23 +256,24 @@ public class Patient {
         }
     }
 
-
-    public static boolean containsNumber(String input)
-    {
+    /**
+     * Checks if the input string contains any numeric digits.
+     * 
+     * @param input The string to be checked.
+     * @return true if the string contains numeric digits, false otherwise.
+     */
+    public static boolean containsNumber(String input) {
 
         int len = input.length();
 
-        for(int i = 0 ; i < len; i ++)
-        {
+        for (int i = 0; i < len; i++) {
             char character = input.charAt(i);
-            if(Character.isDigit(character))
-            {
-                
+            if (Character.isDigit(character)) {
+
                 return true;
             }
         }
         return false;
-    }    
-
+    }
 
 }

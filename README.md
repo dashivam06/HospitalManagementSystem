@@ -9,6 +9,9 @@ Features
 3) View Doctors: Display all doctors stored in the database.
 4) Book Appointments: Schedule appointments between patients and doctors.
 5) Check Doctor Availability: Verify if a doctor is available on a specific date.
+6) Fund Settlement: Handle payment settlements associated with patient appointments.
+7) Cancel Appointments: Cancel scheduled appointments and handle associated payments if applicable.
+8) Discharge Patient: Discharge patient after stored in the database.
 
 Why Is This Important?
 Keeping track of patient and doctor information is crucial for any healthcare facility. 
@@ -35,31 +38,8 @@ Ensure that you have a PostgreSQL database set up and running. The application u
 Update Database Connection Details:
 Open your Java files and update the database connection details (URL, username, password).
 
-USED DATABASE STRUCTURE & GUIDE: 
-CREATE DATABASE HOSPITALMANAGEMENTSYSTEM;
-
-
-CREATE TABLE PATIENTS(
-        ID SERIAL PRIMARY KEY , 
-        Name VARCHAR(100) NOT NULL ,
-        AGE INT NOT NULL , 
-        Gender VARCHAR(15) NOT NULL);
-
-
-
-CREATE TABLE DOCTORS(
-        ID SERIAL PRIMARY KEY ,
-        Name VARCHAR(255) NOT NULL ,  
-        Specialization VARCHAR(100) NOT NULL)
-
-
-CREATE TABLE APPOINTMENTS(
-        ID SERIAL PRIMARY KEY , 
-        PatientID INT NOT NULL , 
-        DoctorID INT NOT NULL , 
-        AppointmentDate DATE NOT NULL ,
-        FOREIGN KEY (PatientID) REFERENCES Patient(ID), 
-        FOREIGN KEY (DoctorID) REFERENCES Doctor(ID) );
+FOR USED DATABASE STRUCTURE & GUIDE: 
+CHECK DBStructure.pdf
 
 Note
 Doctor Data: The data for doctors must be added manually to the database. Ensure that the DOCTORS table is populated with the relevant doctor information before using the application.

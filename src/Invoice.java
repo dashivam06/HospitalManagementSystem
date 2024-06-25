@@ -13,12 +13,25 @@ public class Invoice {
     static int qty = 1;
     static double discountPercentage = 5;
 
+    // Constructor
     public Invoice(Connection con, Scanner scan) {
         connection = con;
         scanner = scan;
     }
 
-    public  void makePayment() {
+    /**
+     * Processes a payment for a specific appointment by inserting the payment
+     * details into the INVOICE table. This method ensures that the appointment ID
+     * is valid and that a payment has not already been made for the given
+     * appointment.
+     * 
+     * The method prompts the user to enter the appointment ID and payment method,
+     * calculates the amount and discount based on the appointment details,
+     * and performs the necessary validations.
+     * 
+     * @throws SQLException If an SQL exception occurs while accessing the database.
+     */
+    public void makePayment() {
         String cmd = "INSERT INTO INVOICE (AppointmentID, PaymentMethod, Amount, Discount)" +
                 "VALUES( ?, ? , ? , ? )";
 
@@ -26,18 +39,16 @@ public class Invoice {
 
         System.out.print("Enter Appointment ID : ");
 
-        int appointmentID =  -1;
+        int appointmentID = -1;
 
-        while(appointmentID ==  -1){
-        try{
-            appointmentID = scanner.nextInt();
+        while (appointmentID == -1) {
+            try {
+                appointmentID = scanner.nextInt();
+            } catch (InputMismatchException f) {
+                System.out.println("\nInvalid input. Please enter a valid Doctor ID.\n");
+                appointmentID = -1;
+            }
         }
-        catch(InputMismatchException f )
-        {
-            System.out.println("\nInvalid input. Please enter a valid Doctor ID.\n");
-            appointmentID = -1;
-        }
-    }
 
         if (checkForAppointments(appointmentID) == 2) {
             System.out.println("\n---------------------------------------------");
@@ -52,14 +63,12 @@ public class Invoice {
             return;
         } else if (checkForAppointments(appointmentID) == 1) {
 
-            String paymentMode = null ;
-            while(paymentMode == null)
-            {
-                try{
-            System.out.print("Enter PaymentMethod : ");
-            paymentMode = scanner.next();
-                }catch(InputMismatchException f)
-                {
+            String paymentMode = null;
+            while (paymentMode == null) {
+                try {
+                    System.out.print("Enter PaymentMethod : ");
+                    paymentMode = scanner.next();
+                } catch (InputMismatchException f) {
                     System.out.println("\nInvalid input. Please enter a valid payment mode.\n");
                     paymentMode = null;
                 }
@@ -90,6 +99,22 @@ public class Invoice {
 
     }
 
+    /**
+     * Calculates the total payment amount for a given appointment based on the
+     * doctor's specialization,
+     * the quantity of services, and any applicable discount.
+     *
+     * @param appointmentid      The ID of the appointment for which the payment
+     *                           amount is to be calculated.
+     * @param discountPercentage The percentage of discount to be applied to the
+     *                           total amount.
+     * @param qty                The quantity or number of services availed.
+     * @return A list containing the following payment details:
+     *         - Index 0: Rate or amount charged per service.
+     *         - Index 1: Total payment amount before any discount.
+     *         - Index 2: Discount amount applied.
+     *         - Index 3: Final payment amount after discount.
+     */
     public static List<Double> getTotalPaymentAmt(int appointmentid, double discountPercentage, int qty) {
         Integer PHYSICIAN_FEES = 3000;
         Integer SURGEON_FEES = 8000;
@@ -141,10 +166,19 @@ public class Invoice {
         output.add(discount);
         output.add(totalPayment);
 
-
         return output;
     }
 
+    /*
+     *
+     * Retrieves detailed information about an appointment from the database.
+     * 
+     * @param appointmentID The ID of the appointment to retrieve details for.
+     * 
+     * @return A ResultSet containing detailed information about the appointment,
+     * including patient details, doctor details, and invoice details.
+     * 
+     */
     public static ResultSet getDetails(int appointmentID) {
         String detailsCmd = """
                 SELECT
@@ -187,22 +221,50 @@ public class Invoice {
 
     }
 
+    /*
+     * Prints an invoice with detailed information about a patient's appointment and
+     * payment.
+     * 
+     * @param invoiceID The ID of the invoice.
+     * 
+     * @param paymentMode The payment method used (e.g., cash, credit card).
+     * 
+     * @param patientID The ID of the patient.
+     * 
+     * @param patientName The name of the patient.
+     * 
+     * @param patientAge The age of the patient.
+     * 
+     * @param patientGender The gender of the patient.
+     * 
+     * @param doctorName The name of the doctor.
+     * 
+     * @param specialization The specialization of the doctor.
+     * 
+     * @param appointmentDate The date of the appointment.
+     * 
+     * @param transactionDate The date of the payment transaction.
+     * 
+     * @param paymentDetail A list containing payment details:
+     * Index 0: Rate or amount charged.
+     * Index 1: Total payment before discount.
+     * Index 2: Discount applied.
+     * Index 3: Final payment amount after discount.
+     */
     public static void printInvoice(String invoiceID, String paymentMode, String patientID,
             String patientName, String patientAge, String patientGender, String doctorName, String specialization,
             String appointmentDate, String transactionDate, List<Double> paymentDetail) {
-
 
         Double totalAmount = paymentDetail.get(3);
         Double rate = paymentDetail.get(0);
         String amtInString = String.valueOf(rate);
         String sumTotalinString = String.valueOf(qty * rate);
         String qtyString = String.valueOf(qty);
-        String discountInString = String.valueOf(discountPercentage * (rate / 100));       
-        String numInWords = NumberToWords.convert(totalAmount.intValue());
+        String discountInString = String.valueOf(discountPercentage * (rate / 100));
+        String numInWords = Num2Word.convert(totalAmount.intValue());
         double totalAmtAfterDis = Double.parseDouble(sumTotalinString) - Double.parseDouble(discountInString);
         String totalAmtAfterDisinStr = String.valueOf(totalAmtAfterDis);
         String testName = " 1 : 1  Session";
-
 
         System.out.println(
                 "+----------------------------------------------------------------------------------------------------+");
@@ -264,6 +326,16 @@ public class Invoice {
 
     }
 
+    /**
+     * Checks the existence and status of appointments and invoices for a given
+     * appointment ID.
+     * 
+     * @param appointmentId The ID of the appointment to check.
+     * @return An integer indicating the status:
+     *         - 0 if no appointment or invoice found.
+     *         - 1 if only an appointment exists.
+     *         - 2 if both appointment and invoice exist.
+     */
     public static int checkForAppointments(int appointmentId) {
         String checkAppointmentCmd = "SELECT * FROM INVOICE WHERE APPOINTMENTID = ? ";
         String checkInvoiceCmd = "SELECT * FROM APPOINTMENTS WHERE ID = ? ";
@@ -304,6 +376,17 @@ public class Invoice {
         return count;
     }
 
+    /*
+     * 
+     * Retrieves detailed information about an appointment from the database,
+     * formats it, and prints an invoice with the details.
+     * 
+     * @param appointmentid The ID of the appointment to retrieve details for.
+     * 
+     * @throws SQLException If an SQL exception occurs while retrieving data from
+     * the database.
+     * 
+     */
     public static void extractData(int appointmentid) {
         try {
             ResultSet result = getDetails(appointmentid);
@@ -338,6 +421,18 @@ public class Invoice {
 
     }
 
+    /*
+     * /**
+     * Formats the input string by appending spaces to match the desired length.
+     * 
+     * @param inputString The string to be formatted.
+     * 
+     * @param desiredLength The desired length of the formatted string.
+     * 
+     * @return The formatted string with spaces appended to match the desired
+     * length.
+     * 
+     */
     public static String formatData(String inputString, int desiredLength) {
         int length = inputString.trim().length();
 

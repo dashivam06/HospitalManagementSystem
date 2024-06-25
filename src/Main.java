@@ -11,7 +11,7 @@ import java.time.format.DateTimeParseException;
 import java.util.InputMismatchException;
 import java.util.Scanner;
 
-public class HospitalManagementSystem {
+public class Main {
 
     private static Connection connection = null;
     private static Scanner scanner = null;
@@ -22,6 +22,15 @@ public class HospitalManagementSystem {
     public static void main(String[] args) {
         mainMenu();
     }
+
+    /*
+     * Displays the main menu for the Hospital Management System and handles user
+     * input.
+     * This method sets up the JDBC connection to the PostgreSQL database,
+     * initializes the necessary objects for managing patients, doctors, and
+     * invoices, and
+     * enters a loop to display the menu and process user choices.
+     */
 
     public static void mainMenu() {
 
@@ -246,6 +255,14 @@ public class HospitalManagementSystem {
 
     }
 
+    /*
+     * Displays a list of all scheduled appointments from the database.
+     * This method retrieves appointment details including appointment ID,
+     * patient name, doctor name, and appointment date by joining the
+     * APPOINTMENTS, PATIENTS, and DOCTORS tables. The retrieved data
+     * is then formatted and printed in a tabular format.
+     *
+     */
     private static void viewAppointments() {
         String checkAppointmentCmd = "SELECT " +
                 "APPOINTMENTS.ID AS AppointmentID, " +
@@ -286,10 +303,21 @@ public class HospitalManagementSystem {
 
     }
 
+    /*
+     * Cancels an appointment and deletes it from the database. If the appointment
+     * is associated
+     * with an invoice, it also handles the payment refund by deleting the
+     * corresponding invoice.
+     *
+     * This method prompts the user for confirmation before proceeding with the
+     * deletion.
+     * It checks the number of appointments linked to the invoice and performs the
+     * deletion
+     * based on this count
+     */
     public static void cancelAppointment() {
 
         int appointmentId = -1;
-        
 
         while (appointmentId == -1) {
 
@@ -300,25 +328,21 @@ public class HospitalManagementSystem {
 
             } catch (InputMismatchException e) {
                 System.out.println("\nInvalid input. Please enter a valid appointment id.\n");
-                scanner.nextLine(); 
+                scanner.nextLine();
                 appointmentId = -1;
             }
         }
-            if(Invoice.checkForAppointments(appointmentId) == 0)
-{
-                System.out.println("\n---------------------------------------");
-                System.out.println("Appointment id cannot be verified.");
-                System.out.println("No entries found for appointment id " + appointmentId);
-                System.out.println("-----------------------------------------\n");
-                cancelAppointment();
-            }
-        
+        if (Invoice.checkForAppointments(appointmentId) == 0) {
+            System.out.println("\n---------------------------------------");
+            System.out.println("Appointment id cannot be verified.");
+            System.out.println("No entries found for appointment id " + appointmentId);
+            System.out.println("-----------------------------------------\n");
+            cancelAppointment();
+        }
 
         int count = Invoice.checkForAppointments(appointmentId);
         String delFromAppointmentStr = "DELETE FROM APPOINTMENTS WHERE ID = ? ";
         String delFromInvoiceStr = "DELETE FROM INVOICE WHERE APPOINTMENTID = ? ";
-
-        
 
         System.out.print("Are you sure to proceed ? (y/n) : ");
         String input = scanner.next();
@@ -354,7 +378,7 @@ public class HospitalManagementSystem {
                 } catch (SQLException e) {
                     e.printStackTrace();
                 }
-            } 
+            }
         }
         System.out.println();
     }
